@@ -49,6 +49,11 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+"""
+homeassistant-1  | 2024-10-31 17:11:38.132 DEBUG (MainThread) [custom_components.uniled.lib.ble.device] Checking support for: 'A0:76:4E:DC:F0:02' (SP530E)... AdvertisementData(local_name='SP530E', manufacturer_data={20563: b'N\x00\xa0vN\xdc\xf0\x02'}, service_uuids=['0000ffe1-0000-1000-8000-00805f9b34fb'], rssi=-53)
+homeassistant-1  | 2024-10-31 17:11:38.133 DEBUG (MainThread) [custom_components.uniled.lib.ble.device] Device 'A0:76:4E:DC:F0:02' (SP530E) not supported!
+"""
+
 BANLANX5XX_MANUFACTURER: Final = "SPLED (BanlanX)"
 BANLANX5XX_MANUFACTURER_ID: Final = 20563
 BANLANX5XX_UUID_SERVICE = [
@@ -56,6 +61,9 @@ BANLANX5XX_UUID_SERVICE = [
 ]
 BANLANX5XX_UUID_WRITE = [BANLANX5XX_UUID_FORMAT.format(part) for part in ["ffe1"]]
 BANLANX5XX_UUID_READ = []
+
+# UUID_BASE_FORMAT = "0000{}-0000-1000-8000-00805f9b34fb"
+"""0000ffe1-0000-1000-8000-00805f9b34fb"""
 
 DICTOF_ONOFF_EFFECTS: Final = {
     0x01: UNILEDEffects.FLOW_FORWARD,
@@ -843,14 +851,18 @@ class SP5xxEProxy(UniledBleModel):
         self, device: BLEDevice, advertisement: AdvertisementData | None = None
     ) -> UniledBleModel | None:
         """Match to one of the SP5xxE devices"""
+        _LOGGER.debug("Trying to match device: %s", device)
         if not hasattr(advertisement, "manufacturer_data"):
+            _LOGGER.debug("No manufacturer data")
             return None
         for mid, data in advertisement.manufacturer_data.items():
             if mid != self.ble_manufacturer_id or data[1] != 0x10:
+                _LOGGER.debug("Mid %s is not ble manufactured_id %s or data[1] is not 0x10 %s", mid, self.ble_manufacturer_id, data[1])
                 continue
             for signature in MODEL_SIGNATURE_LIST:
                 for id, name in signature.ids.items():
                     if id != data[0]:
+                        _LOGGER.debug("ID %s is not data[0] %s", id, data[9])
                         continue
                     return BanlanX5xx(
                         id=id, name=name, info=signature.info, conf=signature.conf

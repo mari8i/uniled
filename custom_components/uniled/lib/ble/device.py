@@ -78,12 +78,15 @@ class UniledBleModel(UniledModel):
     ) -> bool:
         """Is a BLE device supported by UniLED."""
         if not hasattr(advertisement, "manufacturer_data"):
+            _LOGGER.debug("No manufacturer data")
             return False
         for mid, data in advertisement.manufacturer_data.items():
             if isinstance(self.ble_manufacturer_id, list):
                 if mid not in self.ble_manufacturer_id:
+                    _LOGGER.debug("Mid %s is not in manufactured_id %s", mid, self.ble_manufacturer_id)
                     continue
             elif mid != self.ble_manufacturer_id:
+                _LOGGER.debug("Mid %s != manufactured_id %s", mid, self.ble_manufacturer_id)
                 continue
             if self.ble_manufacturer_data is not None:
                 manu_list = self.ble_manufacturer_data
@@ -99,6 +102,8 @@ class UniledBleModel(UniledModel):
                         #    self.manufacturer,
                         # )
                         return True
+                    else:
+                        _LOGGER.debug("data %s does not start with manu_data %s", data, manu_data)
                     # _LOGGER.debug(
                     #    "%s : %s NOT in %s",
                     #    mid,
@@ -106,7 +111,9 @@ class UniledBleModel(UniledModel):
                     #    data.hex(),
                     # )
             else:
+                _LOGGER.debug("BLE manufactured data is None")
                 pass
+        _LOGGER.debug("Exit because of default")
         return False
 
 
